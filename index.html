@@ -12,50 +12,52 @@
 
         :root {
             --primary-color: #6b4752;
-            --secondary-color: #d1495b;
-            --accent-color: #f08080;
             --bg-color: #fcefed;
-            --container-bg-color: #fff;
-            --box-shadow-color: rgba(0, 0, 0, 0.1);
-            --box-shadow: 0 2px 5px var(--box-shadow-color);
+        }
+
+        /* 确保 html 和 body 占据完整高度，为 flex 布局做准备 */
+        html, body {
+            height: 100%;
+            margin: 0;
         }
 
         body {
             font-family: "Noto Sans SC", sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 2%; /* 恢复 body 的内边距，确保容器与屏幕边缘有间距 */
             background-color: var(--bg-color);
             color: var(--primary-color);
-            -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
+            -webkit-tap-highlight-color: transparent;
+
+            /* 使用 Flexbox 实现内容居中和自适应布局 */
+            display: flex;
+            flex-direction: column; /* 垂直排列 */
+            justify-content: center; /* 垂直居中 */
+            align-items: center;     /* 水平居中 */
+            padding: 2%;
+            box-sizing: border-box; /* 让 padding 不会影响总高度/宽度计算 */
         }
 
-        .container {
-            max-width: 800px;
-            margin: 20px auto; /* 顶部留出间距，并水平居中 */
-            background-color: var(--container-bg-color);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: var(--box-shadow);
-            position: relative;
+        /* #app 作为 Vue 的根节点，将继承 body 的 flex 特性 */
+        #app {
+            width: 100%;
+            text-align: center;
         }
 
         /* 用于展示纯文本内容的样式 */
-        .content-pre {
-            font-family: "Noto Sans SC", sans-serif; /* 继承字体 */
+        .content-pre,
+        .loading-text {
             font-size: 1.2em;
             color: var(--primary-color);
             white-space: pre-wrap;      /* 自动换行 */
             word-break: break-word;     /* 单词内换行 */
-            margin: 0; /* 移除 pre 标签的默认 margin */
-            text-align: center; /* 文本居中显示 */
+            margin: 0;
+            max-width: 800px; /* 限制最大宽度，保证可读性 */
+            display: inline-block; /* 允许 max-width 生效 */
+            text-align: center; /* 确保文本居中 */
         }
 
         .loading-text {
-            text-align: center;
             padding: 2em;
-            font-size: 1.2em;
-            color: var(--primary-color);
         }
     </style>
     <!-- 引入 Vue 3 -->
@@ -63,11 +65,9 @@
 </head>
 <body>
     <div id="app">
-        <div class="container">
-             <!-- 内容 -->
-            <div v-if="is_loading" class="loading-text">Loading...</div>
-            <pre v-else class="content-pre">{{ content_text }}</pre>
-        </div>
+        <!-- 内容直接展示，不再有 container 包裹 -->
+        <div v-if="is_loading" class="loading-text">Loading...</div>
+        <pre v-else class="content-pre">{{ content_text }}</pre>
     </div>
 
     <script>
