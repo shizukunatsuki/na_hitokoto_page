@@ -24,22 +24,17 @@
             font-family: "Noto Sans SC", sans-serif;
             line-height: 1.6;
             margin: 0;
-            padding: 2%;
+            padding: 2%; /* 恢复 body 的内边距，确保容器与屏幕边缘有间距 */
             background-color: var(--bg-color);
             color: var(--primary-color);
             -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
-            display: flex; /* 使用 flex 布局使内容垂直居中 */
-            justify-content: center;
-            align-items: center;
-            min-height: 96vh; /* 确保 body 至少和视口一样高 */
         }
 
         .container {
             max-width: 800px;
-            width: 90%; /* 在小屏幕上占满宽度 */
-            margin: 0 auto;
+            margin: 20px auto; /* 顶部留出间距，并水平居中 */
             background-color: var(--container-bg-color);
-            padding: 40px; /* 调整内边距，使其更美观 */
+            padding: 40px;
             border-radius: 20px;
             box-shadow: var(--box-shadow);
             position: relative;
@@ -48,7 +43,7 @@
         /* 用于展示纯文本内容的样式 */
         .content-pre {
             font-family: "Noto Sans SC", sans-serif; /* 继承字体 */
-            font-size: 1.2em; /* 稍大一点的字体，使其更突出 */
+            font-size: 1.2em;
             color: var(--primary-color);
             white-space: pre-wrap;      /* 自动换行 */
             word-break: break-word;     /* 单词内换行 */
