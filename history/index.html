@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史 - なつき</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>○</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap');
+
+        :root {
+            --primary-color: #6b4752;
+            --bg-color: #fcefed;
+            --surface-color: #fff8f7;
+            --muted-color: #8d737b;
+            --line-color: rgba(107, 71, 82, 0.18);
+            --accent-color: #2f6f73;
+            --shadow-color: rgba(107, 71, 82, 0.09);
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: "Noto Sans SC", sans-serif;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button,
+        a {
+            font: inherit;
+        }
+
+        #app {
+            width: min(920px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 44px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .home-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            opacity: 0.74;
+        }
+
+        .home-link:hover,
+        .home-link:focus-visible {
+            opacity: 1;
+        }
+
+        .refresh-button {
+            width: 42px;
+            height: 42px;
+            border: 1px solid var(--line-color);
+            border-radius: 8px;
+            background: var(--surface-color);
+            color: var(--primary-color);
+            cursor: pointer;
+            box-shadow: 0 10px 24px var(--shadow-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 160ms ease, border-color 160ms ease;
+        }
+
+        .refresh-button:hover,
+        .refresh-button:focus-visible {
+            border-color: rgba(47, 111, 115, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .refresh-button:disabled {
+            cursor: default;
+            opacity: 0.52;
+            transform: none;
+        }
+
+        .title-block {
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.9rem, 4vw, 3.4rem);
+            font-weight: 680;
+            letter-spacing: 0;
+            line-height: 1.12;
+        }
+
+        .summary {
+            margin: 10px 0 0;
+            color: var(--muted-color);
+            font-size: 0.98rem;
+        }
+
+        .status {
+            margin: 42px 0;
+            color: var(--muted-color);
+            text-align: center;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .history-item {
+            border: 1px solid var(--line-color);
+            border-radius: 8px;
+            background: var(--surface-color);
+            box-shadow: 0 12px 30px var(--shadow-color);
+            padding: 18px 20px;
+            text-align: left;
+        }
+
+        .history-id {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            color: var(--accent-color);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 0.82rem;
+            letter-spacing: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .history-content {
+            margin: 10px 0 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 1.04rem;
+        }
+
+        @media (max-width: 640px) {
+            #app {
+                width: min(100% - 24px, 920px);
+                padding-top: 20px;
+            }
+
+            .topbar {
+                margin-bottom: 22px;
+            }
+
+            .history-item {
+                padding: 16px;
+            }
+        }
+    </style>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header class="topbar">
+            <a class="home-link" href="/">首页</a>
+            <button class="refresh-button" type="button" title="刷新" :disabled="is_loading" @click="fetch_history">
+                <span aria-hidden="true">↻</span>
+            </button>
+        </header>
+
+        <main>
+            <section class="title-block">
+                <h1>历史</h1>
+                <p class="summary">{{ summary_text }}</p>
+            </section>
+
+            <div v-if="is_loading" class="status">Loading...</div>
+            <div v-else-if="error_text" class="status">{{ error_text }}</div>
+            <div v-else-if="history_items.length === 0" class="status">暂无历史记录</div>
+            <section v-else class="history-list" aria-label="历史记录">
+                <article v-for="item in history_items" :key="item.id" class="history-item">
+                    <div class="history-id">{{ item.id }}</div>
+                    <p class="history-content">{{ item.content }}</p>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, computed, ref, onMounted } = Vue;
+
+        const HISTORY_API_URL = 'https://history.hitokoto.natsuki.cloud/get';
+
+        function get_favicon_url(icon) {
+            return `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${icon}</text></svg>`;
+        }
+
+        createApp({
+            setup() {
+                const history_items = ref([]);
+                const is_loading = ref(false);
+                const error_text = ref('');
+
+                const summary_text = computed(() => {
+                    if (is_loading.value) {
+                        return '正在读取历史记录';
+                    }
+
+                    if (error_text.value) {
+                        return '读取失败';
+                    }
+
+                    return `共 ${history_items.value.length} 条`;
+                });
+
+                const fetch_history = async () => {
+                    is_loading.value = true;
+                    error_text.value = '';
+
+                    try {
+                        const response = await fetch(HISTORY_API_URL, {
+                            cache: 'no-cache',
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP 错误！状态码: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                            throw new Error('历史接口返回格式不正确。');
+                        }
+
+                        history_items.value = Object.entries(data).map(([id, content]) => ({
+                            id,
+                            content: String(content),
+                        }));
+                    } catch (error) {
+                        console.error('获取历史记录时出错:', error);
+                        error_text.value = '加载历史记录失败';
+                        history_items.value = [];
+                    } finally {
+                        is_loading.value = false;
+                    }
+                };
+
+                const update_favicon = (is_focused) => {
+                    const icon = is_focused ? '●' : '○';
+                    document.querySelector('link[rel="icon"]').href = get_favicon_url(icon);
+                };
+
+                onMounted(() => {
+                    fetch_history();
+
+                    window.addEventListener('focus', () => update_favicon(true));
+                    window.addEventListener('blur', () => update_favicon(false));
+                });
+
+                return {
+                    error_text,
+                    fetch_history,
+                    history_items,
+                    is_loading,
+                    summary_text,
+                };
+            },
+        }).mount('#app');
+    </script>
+</body>
+</html>

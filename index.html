@@ -59,11 +59,29 @@
         .loading-text {
             padding: 2em;
         }
+
+        .page-link {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.25rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.74;
+            transition: opacity 160ms ease;
+        }
+
+        .page-link:hover,
+        .page-link:focus-visible {
+            opacity: 1;
+        }
     </style>
     <!-- 引入 Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
 <body>
+    <a class="page-link" href="/history/">历史</a>
     <div id="app">
         <!-- 内容直接展示，不再有 container 包裹 -->
         <div v-if="is_loading" class="loading-text">Loading...</div>
