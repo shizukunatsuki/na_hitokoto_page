@@ -74,8 +74,10 @@ https://history.hitokoto.natsuki.cloud/get
 重要限制：
 
 - `/history/` 当前展示的是 `GET /get` 提供的公开随机历史样本，不是完整历史列表。
+- `GET /get` 当前最多返回 128 条历史内容。D1 中不足 128 条时，返回实际存在的数量。
 - `GET /get` 不提供时间戳，所以页面不能按创建时间排序。
-- `GET /get` 不保证刚写入的内容立刻出现。history 服务的公开随机缓存由 cron 刷新，当前约每 30 分钟刷新一次。
+- `GET /get` 不保证刚写入的内容立刻出现。history 服务的公开随机缓存由 cron 刷新，当前约每小时刷新一次。
+- history 服务内部的 `random_history` KV key 保存公开随机样本的 ID 索引，具体内容按 `id -> content` 分别保存为独立 KV 记录；这不改变前端看到的响应格式。
 
 ## Token 与安全边界
 
@@ -151,7 +153,7 @@ https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&display=swap
 3. 历史页接口是 `https://history.hitokoto.natsuki.cloud/get`，返回 JSON object。
 4. `/get` 是公开接口，不需要 token。
 5. `na_hitokoto_token` 只应用于受保护服务端调用，不能暴露给浏览器。
-6. `/get` 返回的是公开随机样本，不是完整历史、不是按时间排序的列表。
+6. `/get` 返回的是公开随机样本，当前最多 128 条；它不是完整历史、不是按时间排序的列表。
 7. 历史页已经处理 loading、错误、空数据和刷新。
 
 ## 人工检查清单
